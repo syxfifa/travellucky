@@ -52,11 +52,13 @@ class DirectOpenAILLM:
         # TRIP_PLANNER_TIMEOUT，需要比 LLM_TIMEOUT 更长）。未提供时沿用
         # 客户端级的 LLM_TIMEOUT，因此不改变既有调用方的行为。
         request_timeout = kwargs.pop("timeout", None)
-        client = (
-            self._client.with_options(timeout=request_timeout)
-            if request_timeout is not None
-            else self._client
-        )
+        max_retries = kwargs.pop("max_retries", None)
+        client_options = {}
+        if request_timeout is not None:
+            client_options["timeout"] = request_timeout
+        if max_retries is not None:
+            client_options["max_retries"] = max_retries
+        client = self._client.with_options(**client_options) if client_options else self._client
         request_kwargs = {
             "model": kwargs.get("model", self.model),
             "messages": messages,
