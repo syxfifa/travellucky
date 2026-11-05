@@ -7,7 +7,7 @@ from typing import Dict, Any, List, Callable, Awaitable, Optional
 from hello_agents import SimpleAgent
 from hello_agents.tools import MCPTool
 from ..services.llm_service import get_llm
-from ..models.schemas import TripRequest, TripPlan, DayPlan, Attraction, Meal, WeatherInfo, Location, Hotel
+from ..models.schemas import TripRequest, TripPlan, DayPlan, Attraction, Meal, WeatherInfo, Location, Hotel, CityStay
 from ..config import get_settings
 
 # ============ Agent提示词 (动态模版化，仅支持高德) ============
@@ -73,6 +73,32 @@ def _build_hotel_agent_prompt(tool_prefix: str) -> str:
 ATTRACTION_AGENT_PROMPT = ""  # 已弃用，景点改走小红书
 WEATHER_AGENT_PROMPT = _build_weather_agent_prompt("amap")
 HOTEL_AGENT_PROMPT = _build_hotel_agent_prompt("amap")
+
+
+def _resolve_attraction_city(destination: str) -> str | None:
+    """Find the city for a named attraction so weather and hotel tools receive a city."""
+    import httpx
+    key = get_settings().vite_amap_web_key
+    if not key or len(destination.strip()) < 2:
+        return None
+    try:
+        response = httpx.get(
+            'https://restapi.amap.com/v3/place/text',
+            params={'key': key, 'keywords': destination, 'citylimit': 'false', 'offset': 5},
+            timeout=8, trust_env=False,
+        )
+        response.raise_for_status()
+        data = response.json()
+        if data.get('status') != '1':
+            return None
+        for poi in data.get('pois', []):
+            name = poi.get('name', '')
+            city = poi.get('cityname', '')
+            if isinstance(name, str) and isinstance(city, str) and destination == name and city:
+                return city
+    except Exception:
+        pass
+    return None
 
 PLANNER_AGENT_PROMPT = """你是行程规划专家。你的任务是根据景点信息和天气信息,生成详细的旅行计划。支持单城市和多城市行程。
 
@@ -322,6 +348,15 @@ class MultiAgentTripPlanner:
             旅行计划
         """
         try:
+            if len(request.cities) == 1:
+                destination = request.cities[0].city
+                resolved_city = await asyncio.to_thread(_resolve_attraction_city, destination)
+                if resolved_city and resolved_city != destination:
+                    request = request.model_copy(deep=True)
+                    request.city = resolved_city
+                    request.cities = [CityStay(city=resolved_city, days=request.travel_days)]
+                    focus = f'用户指定目的地是“{destination}”，请以该景点或地区为行程核心，优先安排实地游览。'
+                    request.free_text_input = f'{focus} {request.free_text_input or ""}'.strip()
             cities = request.cities  # List[CityStay] — 已由 normalize_cities 保证非空
             total_cities = len(cities)
             city_names = [cs.city for cs in cities]
@@ -1018,4 +1053,5 @@ def reset_trip_planner_agent() -> None:
     """重置旅行规划多智能体实例（用于运行时配置更新后热生效）。"""
     global _multi_agent_planner
     _multi_agent_planner = None
+
 
