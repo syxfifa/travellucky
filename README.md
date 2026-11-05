@@ -32,9 +32,9 @@ docker-compose.yml              本地/PVE/NAS部署
 | VITE_AMAP_SECURITY_JS_CODE | 高德 JS 安全配置 |
 | XHS_COOKIE | 可选，已有登录态的环境变量导入 |
 | ADMIN_TOKEN | 自行生成高强度随机字符串，保护小红书管理接口 |
-| BIND_IP / APP_PORT | 默认 127.0.0.1:7860 |
+| BIND_IP / APP_PORT | 默认 0.0.0.0:7860，供 NAS 局域网访问 |
 | MEMORY_USE_SQLITE | 默认模板启用 SQLite 持久化 |
-| DOCKERHUB_USERNAME / IMAGE_TAG | 拉取或构建镜像名称与版本 |
+| DOCKERHUB_USERNAME / IMAGE_TAG | DockerHub 镜像名称与版本 |
 
 所有部署凭据从环境变量读取；没有 secret ARG、镜像内 .env 或运行时密钥 JSON。前端地图配置通过运行时接口提供，同一镜像可用于不同部署。浏览器 SDK 必然能看见其 JS Key 和 JS 安全配置，应设置高德域名白名单；它们不是后端服务密钥。LLM Key、后端高德 Key 和 Cookie 不通过该接口返回。
 
@@ -76,10 +76,10 @@ docker inspect --format '{{.State.Health.Status}}' travellucky
 
 访问 http://localhost:7860 。预期容器 UID/GID 为 10001，健康检查为 healthy。完整业务验收：配置密钥→登录并检测小红书→生成单城市行程→多城市→检查地图、预算、图片、天气、历史、导出、问答及偏好记忆。无密钥仍可启动，但不代表业务接口可用。
 
-Compose 本地构建：
+Compose 部署已发布的镜像（不会在 NAS 上构建）：
 
 ```sh
-docker compose up -d --build
+docker compose up -d
 docker compose logs --tail 100
 docker compose ps
 ```
@@ -87,8 +87,7 @@ docker compose ps
 发布后的 PVE/NAS 部署：复制 `docker-compose.yml`、`.env.example` 为 `.env`，填 DockerHub 用户名和 IMAGE_TAG。已有镜像不需要源码：
 
 ```sh
-docker compose pull
-docker compose up -d --no-build
+docker compose up -d
 ```
 
 PVE 建议在 x86_64 Debian/Ubuntu 虚拟机内安装 Docker。绿联 NAS 用 Docker/Compose 项目导入；需要局域网访问时将 BIND_IP 设置成 NAS 的局域网 IP 或 0.0.0.0。镜像仅 amd64，不提供 ARM 原生支持。默认命名卷可避免 NAS 绑定目录权限问题；若改成宿主目录，需由管理员提前创建并赋予 UID/GID 10001 写权限。数据库、历史、图片缓存位于 `/app/backend/data`，备份此卷即可；Cookie 不在卷内。
