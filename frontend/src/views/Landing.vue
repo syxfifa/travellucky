@@ -1,35 +1,25 @@
 <template>
   <div class="landing-page">
-    <div class="lower-shade" :style="lowerShadeStyle"></div>
     <NavBar @brand-click="scrollToTop" @cta-click="scrollToForm" />
 
-    <div class="wrapper">
-      <div class="page-header section-dark landing-header" :style="pageHeaderStyle">
-        <div class="filter"></div>
-        <div class="content-center" :style="heroContentStyle">
-          <div class="container">
-            <!-- <p class="landing-hero-badge text-center">{{ t('home.heroBadge') }}</p> -->
-            <div class="title-brand">
-              <h1 class="presentation-title">
-                TRIPSTAR
-              </h1>
-            </div>
-            <h2 class="presentation-subtitle text-center">{{ t('home.titleLine') }}</h2>
-          </div>
-        </div>
-        <div class="moving-clouds" :style="movingCloudsStyle"></div>
-        <div class="fog-low" :style="fogLowStyle">
-          <img src="https://demos.creative-tim.com/paper-kit-2/assets/img/clouds.png" alt="fog" />
-        </div>
-        <div class="fog-low right" :style="fogLowRightStyle">
-          <img src="https://demos.creative-tim.com/paper-kit-2/assets/img/clouds.png" alt="fog" />
-        </div>
-        <div class="hero-bottom-shade" :style="heroBottomShadeStyle"></div>
+    <header class="sunny-hero">
+      <div class="sunny-hero-copy">
+        <span class="sunny-eyebrow"><span class="sunny-eyebrow-dot"></span>{{ t('home.heroBadge') }}</span>
+        <h1>{{ t('home.titleLine') }}</h1>
+        <p>{{ t('home.heroDesc') }}</p>
+        <button type="button" class="sunny-primary-cta" @click="scrollToForm">{{ t('home.nav.cta') }} <span aria-hidden="true">↗</span></button>
       </div>
-    </div>
+      <div class="sunny-journey" aria-hidden="true">
+        <div class="sunny-journey-map"><span class="journey-point point-a"></span><span class="journey-point point-b"></span><span class="journey-point point-c"></span><span class="journey-route"></span><span class="journey-sun"></span></div>
+        <div class="journey-note note-a"><span>01</span>{{ t('home.step1') }}</div>
+        <div class="journey-note note-b"><span>02</span>{{ t('home.step2') }}</div>
+        <div class="journey-note note-c"><span>03</span>{{ t('home.step3') }}</div>
+      </div>
+    </header>
 
     <section ref="formRef" class="form-section">
-      <div class="form-panel" :style="[formRevealStyle, { minHeight: panelHeight === 'auto' ? 'auto' : panelHeight + 'px' }]" ref="panelRef">
+      <div class="form-panel" :style="{ minHeight: panelHeight === 'auto' ? 'auto' : panelHeight + 'px' }" ref="panelRef">
+        <div class="sunny-panel-intro"><span class="sunny-eyebrow">01 / PLAN</span><h2>{{ t('home.nav.cta') }}</h2><p>{{ t('home.heroDesc') }}</p></div>
         <a-form v-show="!loading" :model="formData" layout="vertical" @finish="handleSubmit">
           <div class="step">
             <div class="step-head">
@@ -290,7 +280,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
@@ -315,11 +305,9 @@ const { t } = useI18n()
 const loading = ref(false)
 const loadingProgress = ref(0)
 const loadingStatus = ref('')
-const scrollY = ref(0)
 const formRef = ref<HTMLElement | null>(null)
 const panelRef = ref<HTMLElement | null>(null)
 const panelHeight = ref<number | string>('auto')
-const fogEnabled = ref(true)
 const planCode = ref('')
 const historyLoading = ref(false)
 const historyPlans = ref<TripHistoryItem[]>([])
@@ -374,51 +362,12 @@ const removeCity = (index: number) => {
   formData.cities.splice(index, 1)
 }
 
-const heroProgress = computed(() => Math.min(scrollY.value / 320, 1))
-const toneProgress = computed(() => Math.min(Math.max((scrollY.value - 20) / 360, 0), 1))
-const pageHeaderStyle = computed(() => ({
-  backgroundImage: "url('http://demos.creative-tim.com/paper-kit-2/assets/img/antoine-barres.jpg')",
-  backgroundPosition: `center ${Math.max(-scrollY.value * 0.08, -120)}px`,
-  backgroundSize: 'cover',
-  backgroundRepeat: 'no-repeat',
-}))
-const movingCloudsStyle = computed(() => ({
-  backgroundImage: "url('https://demos.creative-tim.com/paper-kit-2/assets/img/clouds.png')",
-  opacity: fogEnabled.value ? '0.55' : '0',
-}))
-const fogLowStyle = computed(() => ({
-  opacity: fogEnabled.value ? '0.82' : '0',
-}))
-const fogLowRightStyle = computed(() => ({
-  opacity: fogEnabled.value ? '0.72' : '0',
-}))
-const heroContentStyle = computed(() => ({
-  opacity: `${1 - heroProgress.value * 0.95}`,
-  transform: `translate3d(0, ${-heroProgress.value * 46}px, 0)`,
-}))
-const heroBottomShadeStyle = computed(() => ({
-  opacity: `${(0.48 + toneProgress.value * 0.44) * (fogEnabled.value ? 1 : 0)}`,
-}))
-const lowerShadeStyle = computed(() => ({
-  opacity: `${(0.34 + toneProgress.value * 0.52) * (fogEnabled.value ? 1 : 0)}`,
-}))
-const formRevealStyle = computed(() => {
-  const progress = Math.min(Math.max((scrollY.value - 80) / 340, 0), 1)
-  return {
-    opacity: `${0.2 + progress * 0.8}`,
-    transform: `translate3d(0, ${(1 - progress) * 56}px, 0)`,
-  }
-})
-
 const togglePreference = (value: string) => {
   const index = formData.preferences.indexOf(value)
   if (index === -1) formData.preferences.push(value)
   else formData.preferences.splice(index, 1)
 }
 
-const onScroll = () => {
-  scrollY.value = window.scrollY || 0
-}
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 const scrollToForm = () => {
   if (formRef.value) {
@@ -454,12 +403,7 @@ const loadHistoryPlans = async () => {
 }
 
 onMounted(() => {
-  onScroll()
-  window.addEventListener('scroll', onScroll, { passive: true })
   void loadHistoryPlans()
-})
-onUnmounted(() => {
-  window.removeEventListener('scroll', onScroll)
 })
 
 const handleSubmit = async () => {
@@ -1335,3 +1279,4 @@ const handleSubmit = async () => {
   }
 }
 </style>
+

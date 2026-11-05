@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Antd from 'ant-design-vue'
 import 'ant-design-vue/dist/reset.css'
 import './styles/global.css'
+import './styles/sunny-travel.css'
 import App from './App.vue'
 import { i18n } from './i18n'
 
@@ -26,9 +27,16 @@ const router = createRouter({
 
 const app = createApp(App)
 
+for (const [key, choices] of Object.entries({ theme: ['light', 'dark'], material: ['soft', 'clear', 'glass', 'gradient'], color: ['blue', 'mint', 'violet', 'sunset'], corner: ['tight', 'default', 'round'] })) {
+  let saved: string | null = null
+  try { saved = localStorage.getItem(`travellucky-${key}`) } catch {}
+  document.documentElement.dataset[key] = saved && choices.includes(saved) ? saved : choices[0]
+}
+
 app.use(router)
 app.use(Antd)
 app.use(i18n)
 
 app.mount('#app')
+
 

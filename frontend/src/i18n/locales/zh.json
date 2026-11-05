@@ -14,6 +14,7 @@
     "footerCopy": "{year} All rights reserved.",
     "footerTech": "Powered by HelloAgents + 高德 MCP"
   },
+  "appearance": {"title":"外观","close":"关闭","theme":"明暗","material":"材质","color":"配色","corner":"圆角","light":"浅色","dark":"深色","soft":"柔和浮雕","clear":"清晰简约","glass":"雾面玻璃","gradient":"渐层","blue":"晴蓝","mint":"青瓷","violet":"鸢紫","sunset":"海盐日落","tight":"紧凑","default":"标准","round":"圆润"},
   "common": {
     "dayNumber": "第 {day} 天",
     "dayCount": "{count} 天",

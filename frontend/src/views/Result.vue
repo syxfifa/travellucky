@@ -1,11 +1,13 @@
 <template>
   <div class="result-container">
-    <div class="lower-shade"></div>
-
     <NavBar @brand-click="goBack" @cta-click="goBack" />
 
     <main class="result-main">
       <div v-if="tripPlan" class="content-wrapper">
+        <header class="sunny-result-intro">
+          <div><span class="sunny-eyebrow">TRAVEL PLAN / {{ planId || '—' }}</span><h1>{{ tripPlan.city }}</h1><p>{{ t('result.dateRange', { start: tripPlan.start_date, end: tripPlan.end_date }) }}</p></div>
+          <div class="sunny-result-stats"><div><strong>{{ tripPlan.days.length }}</strong><span>{{ t('home.travelDaysUnit') }}</span></div><div v-if="tripPlan.budget"><strong>¥{{ formatBudgetAmount(tripPlan.budget.total) }}</strong><span>{{ t('result.side.budget') }}</span></div></div>
+        </header>
         <div class="top-switch-nav">
           <div class="top-switch-menu-wrap">
             <a-menu class="top-switch-menu" mode="horizontal" :selected-keys="[activeSection]" @click="scrollToSection">
@@ -4428,3 +4430,4 @@ const drawRoutes = async (AMap: any, attractions: any[]): Promise<any[]> => {
   display: none !important;
 }
 </style>
+

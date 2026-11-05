@@ -14,6 +14,7 @@
     "footerCopy": "{year} All rights reserved.",
     "footerTech": "Powered by HelloAgents + AMap MCP"
   },
+  "appearance": {"title":"Appearance","close":"Close","theme":"Theme","material":"Material","color":"Palette","corner":"Corners","light":"Light","dark":"Dark","soft":"Soft","clear":"Clear","glass":"Frosted glass","gradient":"Gradient","blue":"Blue","mint":"Mint","violet":"Violet","sunset":"Sunset","tight":"Tight","default":"Default","round":"Round"},
   "common": {
     "dayNumber": "Day {day}",
     "dayCount": "{count} days",

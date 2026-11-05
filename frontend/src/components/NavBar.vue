@@ -36,6 +36,9 @@
             </button> -->
           </li>
           <li class="nav-item landing-lang-item">
+            <AppearancePicker />
+          </li>
+          <li class="nav-item landing-lang-item">
             <a-select v-model:value="locale" class="lang-select-nav" size="small" :aria-label="t('app.language.label')">
               <a-select-option value="zh-CN">{{ t('app.language.zh') }}</a-select-option>
               <a-select-option value="ja-JP">{{ t('app.language.ja') }}</a-select-option>
@@ -160,6 +163,7 @@ import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import type { RuntimeSettings } from '@/types'
 import { getRuntimeSettings, saveRuntimeSettings } from '@/services/api'
+import AppearancePicker from '@/components/AppearancePicker.vue'
 
 const { t, locale } = useI18n()
 const settingsVisible = ref(false)

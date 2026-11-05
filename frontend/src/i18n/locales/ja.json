@@ -14,6 +14,7 @@
     "footerCopy": "{year} All rights reserved.",
     "footerTech": "Powered by HelloAgents + AMap MCP"
   },
+  "appearance": {"title":"外観","close":"閉じる","theme":"明暗","material":"質感","color":"配色","corner":"角丸","light":"ライト","dark":"ダーク","soft":"ソフト","clear":"シンプル","glass":"すりガラス","gradient":"グラデーション","blue":"ブルー","mint":"ミント","violet":"バイオレット","sunset":"サンセット","tight":"小さめ","default":"標準","round":"丸め"},
   "common": {
     "dayNumber": "{day} 日目",
     "dayCount": "{count} 日間",
