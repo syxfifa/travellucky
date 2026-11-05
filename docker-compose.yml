@@ -1,14 +1,13 @@
 name: travellucky
 services:
   app:
-    image: ${DOCKERHUB_USERNAME:-local}/travellucky:${IMAGE_TAG:-latest}
-    build:
-      context: .
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME in .env}/travellucky:${IMAGE_TAG:-latest}
+    pull_policy: always
     platform: linux/amd64
     init: true
     restart: unless-stopped
     ports:
-      - "${BIND_IP:-127.0.0.1}:${APP_PORT:-7860}:7860"
+      - "${BIND_IP:-0.0.0.0}:${APP_PORT:-7860}:7860"
     env_file:
       - .env
     environment:
