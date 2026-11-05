@@ -24,6 +24,19 @@ def test_account_denies_missing_and_wrong_token(monkeypatch):
         assert c.get('/api/account/status', headers={'Authorization':'Bearer test-only-token'}).status_code == 200
 
 
+def test_manual_cookie_import_requires_admin_and_keeps_cookie_out_of_response(monkeypatch):
+    monkeypatch.setenv('ADMIN_TOKEN', 'test-only-token')
+    headers = {'Authorization': 'Bearer test-only-token'}
+    with client() as c:
+        assert c.post('/api/account/cookie', json={'cookie': 'web_session=private-cookie'}).status_code == 401
+        assert c.post('/api/account/cookie', headers=headers, json={'cookie': 'a1=abc'}).status_code == 422
+        response = c.post('/api/account/cookie', headers=headers, json={'cookie': 'web_session=private-cookie; a1=abc'})
+        assert response.status_code == 200
+        assert 'private-cookie' not in response.text
+        assert c.get('/api/account/status', headers=headers).json()['configured'] is True
+        c.delete('/api/account/login', headers=headers)
+
+
 def test_public_config_does_not_return_server_credentials(monkeypatch):
     monkeypatch.setenv('LLM_API_KEY', 'private-model-token')
     monkeypatch.setenv('XHS_COOKIE', 'private-cookie')
@@ -54,3 +67,4 @@ def test_missing_route_coordinates_do_not_fabricate_route(monkeypatch):
     svc = AmapService()
     monkeypatch.setattr(svc, 'geocode', lambda *args: None)
     assert svc.plan_route('missing','missing') == {}
+
