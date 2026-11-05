@@ -61,10 +61,15 @@ class DirectOpenAILLM:
             "model": kwargs.get("model", self.model),
             "messages": messages,
             "temperature": kwargs.get("temperature", 0.7),
-            "max_tokens": kwargs.get("max_tokens"),
             "top_p": kwargs.get("top_p"),
             "stop": kwargs.get("stop"),
         }
+
+        # HelloAgents may pass 0 to mean "use the provider default". Some
+        # OpenAI-compatible providers reject max_tokens=0, so omit it.
+        max_tokens = kwargs.get("max_tokens")
+        if max_tokens is not None and int(max_tokens) > 0:
+            request_kwargs["max_tokens"] = int(max_tokens)
 
         if kwargs.get("response_format") is not None:
             request_kwargs["response_format"] = kwargs["response_format"]
@@ -147,4 +152,3 @@ def reset_llm():
     """重置LLM实例(用于测试或重新配置)"""
     global _llm_instance
     _llm_instance = None
-
