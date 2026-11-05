@@ -1,0 +1,69 @@
+name: Docker
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate release tag
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$ ]] || { echo "Use vMAJOR.MINOR.PATCH"; exit 1; }
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/travellucky
+          flavor: latest=false
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=semver,pattern={{version}}
+            type=sha,prefix=sha-,format=short
+      - name: Build smoke-test image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: travellucky:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Verify non-root startup without secrets
+        shell: bash
+        run: |
+          docker run -d --name smoke --init --shm-size=256m travellucky:ci
+          trap 'docker logs smoke; docker rm -f smoke' EXIT
+          test "$(docker exec smoke id -u)" = "10001"
+          for attempt in $(seq 1 30); do
+            if docker exec smoke python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7860/health', timeout=2)"; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

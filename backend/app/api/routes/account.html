@@ -1,0 +1,18 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>travellucky · 小红书账号</title>
+<style>body{max-width:1000px;margin:32px auto;padding:16px;background:#121820;color:#eee;font:16px system-ui}button,input{padding:10px;margin:6px}img{width:100%;border:1px solid #678}a{color:#9de}</style>
+<h1>小红书登录管理</h1><a href="/">返回行程规划</a>
+<p>输入部署时设置的 ADMIN_TOKEN。点击登录后，在下方网页截图中点击登录入口并扫码。需要输入时，先点击截图中的输入框，再使用文字输入。Cookie 每 30 秒同步到运行中服务，不写入文件；重启后需要重新登录或通过 XHS_COOKIE 环境变量导入。</p>
+<input id="token" type="password" placeholder="ADMIN_TOKEN" autocomplete="off">
+<button id="login">登录／重新打开</button><button id="refresh">刷新画面</button><button id="check">检测可用性</button><button id="logout">退出并清除会话</button>
+<div><input id="text" type="password" autocomplete="off" placeholder="向已选输入框输入文字"><button id="type">输入</button></div><pre id="status">未连接</pre><img id="screen" alt="登录后显示专用浏览器画面">
+<script>
+const $=id=>document.getElementById(id);let imageUrl;
+async function api(path,method='GET',body){const r=await fetch('/api/account/'+path,{method,headers:{Authorization:'Bearer '+$('token').value,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});if(!r.ok)throw Error(await r.text());return r}
+async function refresh(){const r=await api('screenshot');if(imageUrl)URL.revokeObjectURL(imageUrl);imageUrl=URL.createObjectURL(await r.blob());$('screen').src=imageUrl;$('status').textContent=JSON.stringify(await(await api('status')).json(),null,2)}
+const run=fn=>async()=>{try{await fn()}catch(e){$('status').textContent=e.message}};
+$('login').onclick=run(async()=>{await api('login','POST');await refresh()});$('refresh').onclick=run(refresh);
+$('check').onclick=run(async()=>{$('status').textContent=JSON.stringify(await(await api('check','POST')).json())});
+$('logout').onclick=run(async()=>{await api('login','DELETE');$('screen').removeAttribute('src');$('status').textContent='已清除当前会话'});
+$('type').onclick=run(async()=>{await api('action','POST',{kind:'text',text:$('text').value});$('text').value='';await refresh()});
+$('screen').onclick=async e=>{try{const r=e.target.getBoundingClientRect();await api('action','POST',{kind:'click',x:(e.clientX-r.left)*1000/r.width,y:(e.clientY-r.top)*750/r.height});setTimeout(run(refresh),800)}catch(err){$('status').textContent=err.message}};
+</script></html>

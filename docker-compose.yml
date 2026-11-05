@@ -1,0 +1,29 @@
+name: travellucky
+services:
+  app:
+    image: ${DOCKERHUB_USERNAME:-local}/travellucky:${IMAGE_TAG:-latest}
+    build:
+      context: .
+    platform: linux/amd64
+    init: true
+    restart: unless-stopped
+    ports:
+      - "${BIND_IP:-127.0.0.1}:${APP_PORT:-7860}:7860"
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - app-data:/app/backend/data
+    shm_size: 256mb
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+volumes:
+  app-data:
