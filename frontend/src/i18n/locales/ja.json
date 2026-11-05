@@ -77,7 +77,7 @@
     "step2": "希望設定",
     "step3": "特別な要望",
     "cityLabel": "目的地の都市",
-    "cityPlaceholder": "都市名を入力（例：中国-杭州）",
+    "cityPlaceholder": "都市・地域・観光地を入力（例：西湖）",
     "cityRequired": "目的地の都市を入力してください",
     "startDateLabel": "出発日",
     "startDatePlaceholder": "出発日を選択",
@@ -301,3 +301,4 @@
     }
   }
 }
+
