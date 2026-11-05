@@ -196,6 +196,18 @@ class PerRequestTimeoutTests(unittest.TestCase):
         self.assertEqual(content, "好的")
         self.assertEqual(fake.effective_timeouts, [42])
 
+    def test_zero_max_tokens_uses_provider_default(self) -> None:
+        fake = _FakeClient()
+        llm = _make_llm(fake)
+
+        llm.invoke([{"role": "user", "content": "hi"}], max_tokens=0)
+        llm.invoke([{"role": "user", "content": "hi"}], stream=False, max_tokens=0)
+        llm.invoke([{"role": "user", "content": "hi"}], max_tokens=1500)
+
+        self.assertNotIn("max_tokens", fake.requests[0])
+        self.assertNotIn("max_tokens", fake.requests[1])
+        self.assertEqual(fake.requests[2]["max_tokens"], 1500)
+
 
 class TripPlannerTimeoutTests(unittest.TestCase):
     """端到端：TRIP_PLANNER_TIMEOUT 必须能一路到达 HTTP 客户端。"""
