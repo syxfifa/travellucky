@@ -77,7 +77,7 @@
     "step2": "Preferences",
     "step3": "Special Needs",
     "cityLabel": "Destination City",
-    "cityPlaceholder": "Enter a city, e.g. China-Hangzhou",
+    "cityPlaceholder": "Enter a city, region or attraction, e.g. West Lake",
     "cityRequired": "Please enter a destination city",
     "startDateLabel": "Departure Date",
     "startDatePlaceholder": "Select departure date",
@@ -301,3 +301,4 @@
     }
   }
 }
+
