@@ -427,6 +427,8 @@ JSON 返回示例:
             [{"role": "user", "content": extract_prompt}],
             temperature=0.1,
             stream=False,
+            timeout=90,
+            max_retries=0,
         )
 
         json_match = re.search(r'\[.*\]', content, re.DOTALL)
