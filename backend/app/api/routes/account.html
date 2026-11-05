@@ -1,18 +1,25 @@
-<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>travellucky · 小红书账号</title>
-<style>body{max-width:1000px;margin:32px auto;padding:16px;background:#121820;color:#eee;font:16px system-ui}button,input{padding:10px;margin:6px}img{width:100%;border:1px solid #678}a{color:#9de}</style>
-<h1>小红书登录管理</h1><a href="/">返回行程规划</a>
-<p>输入部署时设置的 ADMIN_TOKEN。点击登录后，在下方网页截图中点击登录入口并扫码。需要输入时，先点击截图中的输入框，再使用文字输入。Cookie 每 30 秒同步到运行中服务，不写入文件；重启后需要重新登录或通过 XHS_COOKIE 环境变量导入。</p>
-<input id="token" type="password" placeholder="ADMIN_TOKEN" autocomplete="off">
-<button id="login">登录／重新打开</button><button id="refresh">刷新画面</button><button id="check">检测可用性</button><button id="logout">退出并清除会话</button>
-<div><input id="text" type="password" autocomplete="off" placeholder="向已选输入框输入文字"><button id="type">输入</button></div><pre id="status">未连接</pre><img id="screen" alt="登录后显示专用浏览器画面">
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>travellucky · 小红书账号</title>
+<style>body{max-width:1000px;margin:32px auto;padding:16px;background:#121820;color:#eee;font:16px system-ui}button,input,textarea{padding:10px;margin:6px;background:#202b36;color:#eee;border:1px solid #678;border-radius:5px}button{cursor:pointer}button:hover{background:#304050}textarea{box-sizing:border-box;width:100%;min-height:90px}img{width:100%;border:1px solid #678;cursor:crosshair}a{color:#9de}pre{white-space:pre-wrap;color:#9de}.help{color:#bbc6d0;line-height:1.6}.row{display:flex;flex-wrap:wrap;align-items:center}</style></head>
+<body><h1>小红书登录管理</h1><a href="/">返回行程规划</a>
+<p class="help">输入部署时设置的 ADMIN_TOKEN。点击“打开扫码页面”，在下方画面中点击登录入口并扫码。画面每 5 秒自动刷新，Cookie 自动同步到运行中的服务。密钥和 Cookie 只保存在当前进程内，容器重启后需重新登录或通过 XHS_COOKIE 环境变量导入。</p>
+<div class="row"><input id="token" type="password" placeholder="ADMIN_TOKEN" autocomplete="off"><button id="login">打开扫码页面</button><button id="refresh">刷新画面</button><button id="check">检测可用性</button><button id="logout">退出并清除会话</button></div>
+<p class="help">扫码不可用时，可在浏览器登录小红书后，从开发者工具的网络请求中复制完整 Cookie 请求头，粘贴到下方导入。</p>
+<textarea id="cookie" placeholder="Cookie 请求头或浏览器导出的 JSON Cookie 列表" autocomplete="off"></textarea><button id="import">导入 Cookie</button>
+<div class="row"><input id="text" autocomplete="off" placeholder="向截图中选中的输入框输入文字"><button id="type">输入文字</button></div>
+<pre id="status" role="status">未连接</pre><img id="screen" alt="点击打开扫码页面后显示浏览器画面" hidden>
 <script>
-const $=id=>document.getElementById(id);let imageUrl;
-async function api(path,method='GET',body){const r=await fetch('/api/account/'+path,{method,headers:{Authorization:'Bearer '+$('token').value,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});if(!r.ok)throw Error(await r.text());return r}
-async function refresh(){const r=await api('screenshot');if(imageUrl)URL.revokeObjectURL(imageUrl);imageUrl=URL.createObjectURL(await r.blob());$('screen').src=imageUrl;$('status').textContent=JSON.stringify(await(await api('status')).json(),null,2)}
+const $=id=>document.getElementById(id);let imageUrl,refreshTimer;
+async function api(path,method='GET',body){const r=await fetch('/api/account/'+path,{method,headers:{Authorization:'Bearer '+$('token').value,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});if(!r.ok){let detail;try{detail=(await r.json()).detail}catch{}throw Error(detail||`HTTP ${r.status}`)}return r}
+async function showStatus(){const state=await(await api('status')).json();$('status').textContent=JSON.stringify(state,null,2)}
+async function refresh(){const r=await api('screenshot');if(imageUrl)URL.revokeObjectURL(imageUrl);imageUrl=URL.createObjectURL(await r.blob());$('screen').src=imageUrl;$('screen').hidden=false;await showStatus()}
 const run=fn=>async()=>{try{await fn()}catch(e){$('status').textContent=e.message}};
-$('login').onclick=run(async()=>{await api('login','POST');await refresh()});$('refresh').onclick=run(refresh);
-$('check').onclick=run(async()=>{$('status').textContent=JSON.stringify(await(await api('check','POST')).json())});
-$('logout').onclick=run(async()=>{await api('login','DELETE');$('screen').removeAttribute('src');$('status').textContent='已清除当前会话'});
+$('login').onclick=run(async()=>{await api('login','POST');await refresh();clearInterval(refreshTimer);refreshTimer=setInterval(()=>refresh().catch(e=>{$('status').textContent=e.message}),5000)});
+$('refresh').onclick=run(refresh);
+$('check').onclick=run(async()=>{$('status').textContent=JSON.stringify(await(await api('check','POST')).json(),null,2)});
+$('import').onclick=run(async()=>{await api('cookie','POST',{cookie:$('cookie').value});$('cookie').value='';await showStatus()});
+$('logout').onclick=run(async()=>{await api('login','DELETE');clearInterval(refreshTimer);$('screen').hidden=true;$('screen').removeAttribute('src');$('status').textContent='已清除当前会话'});
 $('type').onclick=run(async()=>{await api('action','POST',{kind:'text',text:$('text').value});$('text').value='';await refresh()});
-$('screen').onclick=async e=>{try{const r=e.target.getBoundingClientRect();await api('action','POST',{kind:'click',x:(e.clientX-r.left)*1000/r.width,y:(e.clientY-r.top)*750/r.height});setTimeout(run(refresh),800)}catch(err){$('status').textContent=err.message}};
-</script></html>
+$('screen').onclick=run(async e=>{const r=e.target.getBoundingClientRect();await api('action','POST',{kind:'click',x:(e.clientX-r.left)*1000/r.width,y:(e.clientY-r.top)*750/r.height});setTimeout(()=>refresh().catch(err=>{$('status').textContent=err.message}),800)});
+</script></body></html>
+
