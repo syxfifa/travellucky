@@ -35,7 +35,8 @@ COPY backend/ /app/backend/
 COPY --from=signatures /build/node_modules /app/backend/node_modules
 COPY --from=frontend /build/dist /app/frontend/dist
 COPY LICENSE /app/LICENSE
-RUN mkdir -p /app/backend/data && chown -R app:app /app/backend/data /home/app
+RUN mkdir -p /app/backend/data/trip_tasks \
+    && chown -R app:app /app/backend/data
 USER 10001:10001
 WORKDIR /app/backend
 EXPOSE 7860
