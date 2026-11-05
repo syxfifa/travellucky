@@ -208,6 +208,14 @@ class PerRequestTimeoutTests(unittest.TestCase):
         self.assertNotIn("max_tokens", fake.requests[1])
         self.assertEqual(fake.requests[2]["max_tokens"], 1500)
 
+    def test_request_can_disable_retries_for_bounded_xhs_extraction(self) -> None:
+        fake = _FakeClient()
+        llm = _make_llm(fake)
+        with mock.patch.object(fake, "with_options", wraps=fake.with_options) as options:
+            llm.invoke([{"role": "user", "content": "hi"}], stream=False,
+                       timeout=90, max_retries=0)
+        options.assert_called_once_with(timeout=90, max_retries=0)
+
 
 class TripPlannerTimeoutTests(unittest.TestCase):
     """端到端：TRIP_PLANNER_TIMEOUT 必须能一路到达 HTTP 客户端。"""
